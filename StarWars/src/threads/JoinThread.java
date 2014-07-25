@@ -4,9 +4,13 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Types;
+import java.util.List;
+import java.util.Map;
 
 
 public class JoinThread extends Thread{
+
+	private static Map<Integer, Galaxy> galaxies;
 	
 	private final String user = "jedi";
 	private final String password = "jedi";
@@ -14,6 +18,8 @@ public class JoinThread extends Thread{
 	private final int MAX_REGISTER_NUMBER = 100000;
 	
 	private void register() throws ClassNotFoundException, SQLException {
+		
+		//regist master
 		Class.forName("com.mysql.jdbc.Driver");
 		Connection connection;
 		connection = DriverManager.getConnection(url, user, password);
@@ -26,8 +32,8 @@ public class JoinThread extends Thread{
 		callableStatement.registerOutParameter(3, Types.TINYINT);
 		
 		callableStatement.execute();
-		
 		int userId = (int) callableStatement.getObject(1);
+		//TODO databaseId에 대한 삭제필요
 		int databaseId = (int) callableStatement.getObject(2);
 		int galaxyId = (int) callableStatement.getObject(3);
 		
@@ -36,8 +42,21 @@ public class JoinThread extends Thread{
 		System.out.println(galaxyId);
 		
 		callableStatement.close();
+		connection.close();
 		
-		sql = "{CALL ADDUSER_SHARD(?, ?)}";
+		//regist shard
+		registerShard(userId, galaxyId);
+	}
+
+	private void registerShard(int userId, int galaxyId)
+			throws SQLException {
+		System.out.println("galaxyId : "+galaxyId);
+		System.out.println("getGalaxy : " + galaxies.get(galaxyId));
+		System.out.println("getGalaxy : " + galaxies.get(galaxyId));
+		
+		Connection connection = galaxies.get(galaxyId).getConnection();
+		String sql = "{CALL ADDUSER_SHARD(?, ?)}";
+		CallableStatement callableStatement;
 		callableStatement = connection.prepareCall(sql);
 		
 		callableStatement.setInt(1, userId);
@@ -59,5 +78,9 @@ public class JoinThread extends Thread{
 				e.printStackTrace();
 			}
 		}
+	}
+
+	public static void setGalaxies(Map<Integer, Galaxy> galaxies) {
+		JoinThread.galaxies = galaxies; 
 	}
 }

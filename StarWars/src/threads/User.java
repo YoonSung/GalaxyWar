@@ -6,12 +6,13 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 public class User extends Thread {
 
 	private final int ATTACK_NUM = 25000;
-	private static List<Galaxy> galaxies;
+	private static Map<Integer, Galaxy> galaxies;
 
 	@Override
 	public void run() {
@@ -90,7 +91,7 @@ public class User extends Thread {
 		return galaxies.get(rand);
 	}
 
-	public static void setGalaxies(List<Galaxy> galaxies) {
+	public static void setGalaxies(Map<Integer, Galaxy> galaxies) {
 		User.galaxies = galaxies;
 	}
 }

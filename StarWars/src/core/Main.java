@@ -4,7 +4,10 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Scanner;
 
 import threads.Galaxy;
 import threads.JoinThread;
@@ -28,10 +31,14 @@ public class Main {
 		SocketThread socketThread = new SocketThread();
 		socketThread.start();
 		
-		List<Galaxy> galaxies = null;
+		Map<Integer, Galaxy> galaxies = null;
 		
 		try {
 			galaxies = getGalaxies();
+			System.out.println("galaxies : "+galaxies);
+			Scanner scanner = new Scanner(System.in);
+			JoinThread.setGalaxies(galaxies);
+			User.setGalaxies(galaxies);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -43,7 +50,6 @@ public class Main {
 		threads.add(joinThread);
 		
 		//공격
-		User.setGalaxies(galaxies);
 		for (int i = 0; i < ATTACK_THREAD_NUM; i++) {
 			User user = new User();
 			threads.add(user);
@@ -52,18 +58,18 @@ public class Main {
 		
 	}
 	
-	private static List<Galaxy> getGalaxies() throws SQLException, ClassNotFoundException {
+	private static Map<Integer, Galaxy> getGalaxies() throws SQLException, ClassNotFoundException {
 		
-		List<Galaxy> galaxies = new ArrayList<Galaxy>();
+		Map<Integer, Galaxy> galaxies = new HashMap<Integer, Galaxy>();
 		
 		for (String ip : IP_LIST) {
 			Class.forName("com.mysql.jdbc.Driver");
 			Connection connection;
-			String user = "yoonsung";
-			String password = "yoondb";
+			String user = "jedi";
+			String password = "jedi";
 			String url = "jdbc:mysql://" + ip + "/yoda?noAccessToProcedureBodies=true";
 			
-			String sql = "SELECT * from db";
+			String sql = "SELECT * from galaxy";
 			
 			//connection = DriverManager.getConnection(url, user, password);
 			ConnectionPool connectionPool = new ConnectionPool(user, password, url);
@@ -72,8 +78,10 @@ public class Main {
 			PreparedStatement psmt = connection.prepareStatement(sql);
 			ResultSet rs = psmt.executeQuery();
 			
+			int galaxyId = rs.getInt("GID");
+			
 			while (rs.next()) {
-				galaxies.add(new Galaxy(connectionPool, rs.getInt("GID"), rs.getString("NAME")));
+				galaxies.put( galaxyId, new Galaxy(connectionPool, galaxyId, rs.getString("NAME")));
 			}
 			
 			connection.close();
