@@ -35,13 +35,13 @@ public class User extends Thread {
 			e1.printStackTrace();
 		}
 		
-		String sql = "{CALL RANDOM_ATTACKER(?)}";
+		String sql = "{CALL RANDOM_ATTACKER(?, ?, ?)}";
 		CallableStatement callableStatement;
 		try {
 			callableStatement = connection.prepareCall(sql);
 			callableStatement.setInt(1, attackerGalaxy.id);
-			callableStatement.registerOutParameter(1, Types.INTEGER);
 			callableStatement.registerOutParameter(2, Types.INTEGER);
+			callableStatement.registerOutParameter(3, Types.INTEGER);
 
 			callableStatement.execute();
 
