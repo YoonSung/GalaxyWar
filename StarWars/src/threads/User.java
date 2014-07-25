@@ -23,10 +23,18 @@ public class User extends Thread {
 
 	private void operation() {
 		Galaxy attackerGalaxy = getRandomGalaxy();
+		System.out.println("attackerGalaxy : "+attackerGalaxy);
 		Galaxy targetGalaxy = getTargetGalaxy(attackerGalaxy);
-
-		Connection targetConnection = targetGalaxy.getConnection();
-		Connection connection = attackerGalaxy.getConnection();
+		System.out.println("targetGalaxy : "+targetGalaxy);
+		Connection targetConnection = null;
+		Connection connection = null;
+		try {
+			targetConnection = targetGalaxy.getConnection();
+			connection = attackerGalaxy.getConnection();
+		} catch (SQLException e1) {
+			e1.printStackTrace();
+		}
+		
 		String sql = "{CALL RANDOM_ATTACKER(?)}";
 		CallableStatement callableStatement;
 		try {
@@ -60,7 +68,8 @@ public class User extends Thread {
 			e.printStackTrace();
 		} finally {
 			try {
-				connection.close();
+				if (connection != null)
+					connection.close();
 			} catch (SQLException e) {
 				e.printStackTrace();
 			}
@@ -86,9 +95,11 @@ public class User extends Thread {
 	}
 
 	private Galaxy getRandomGalaxy() {
-		Random random = new Random();
-		int rand = random.nextInt() % 4;
-		return galaxies.get(rand);
+		int MINIMUM = 1;
+		int MAXIMUM = 4;
+		Random rn = new Random();
+		int randomNum = rn.nextInt((MAXIMUM - MINIMUM) + 1) + MINIMUM;
+		return galaxies.get(randomNum);
 	}
 
 	public static void setGalaxies(Map<Integer, Galaxy> galaxies) {

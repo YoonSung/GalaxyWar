@@ -1,6 +1,7 @@
 package threads;
 
 import java.sql.Connection;
+import java.sql.SQLException;
 
 import core.ConnectionPool;
 
@@ -16,7 +17,7 @@ public class Galaxy {
 		this.name = name;
 	}
 
-	public Connection getConnection() {
-		return null;
+	public Connection getConnection() throws SQLException {
+		return connectionPool.getConnection();
 	}
 }

@@ -51,7 +51,7 @@ public class JoinThread extends Thread{
 	private void registerShard(int userId, int galaxyId)
 			throws SQLException {
 		System.out.println("galaxyId : "+galaxyId);
-		System.out.println("getGalaxy : " + galaxies.get(galaxyId));
+		System.out.println("getGalaxy : " + galaxies.size());
 		System.out.println("getGalaxy : " + galaxies.get(galaxyId));
 		
 		Connection connection = galaxies.get(galaxyId).getConnection();
