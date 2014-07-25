@@ -1,3 +1,9 @@
+/* CREATE USER */
+CREATE USER ‘yoonsung’@‘%’ IDENTIFIED BY ‘userId’;
+GRANT ALL PRIVILEGES ON  yoda%.* to yoonsung
+
+
+
 DROP DATABASE IF EXISTS yoda;
 CREATE DATABASE IF NOT EXISTS yoda;
 USE yoda;
