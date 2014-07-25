@@ -19,8 +19,8 @@ public class Main {
 	
 	@SuppressWarnings("serial")
 	private static ArrayList<String> IP_LIST = new ArrayList<String>(){{
-		add("ip1");
-		add("ip2");
+		add("10.73.45.65");
+		add("10.73.45.67");
 	}};
 	
 	public static void main(String[] args) {

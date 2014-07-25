@@ -8,9 +8,9 @@ import java.sql.Types;
 
 public class JoinThread extends Thread{
 	
-	private final String user = "yoonsung";
-	private final String password = "yoondb";
-	private final String url = "jdbc:mysql://10.73.45.65/yoda?noAccessToProcedureBodies=true";
+	private final String user = "jedi";
+	private final String password = "jedi";
+	private final String url = "jdbc:mysql://10.73.43.201/yoda?noAccessToProcedureBodies=true";
 	private final int MAX_REGISTER_NUMBER = 100000;
 	
 	private void register() throws ClassNotFoundException, SQLException {

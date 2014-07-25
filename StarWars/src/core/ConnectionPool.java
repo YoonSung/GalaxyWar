@@ -15,6 +15,7 @@ public class ConnectionPool implements DataSource{
 	BasicDataSource basicDataSource;
 	
 	public ConnectionPool(String user, String password, String url) {
+		basicDataSource = new BasicDataSource();
 		basicDataSource.setDriverClassName("com.mysql.jdbc.Driver");
         basicDataSource.setUrl(url);
         basicDataSource.setUsername(user);
