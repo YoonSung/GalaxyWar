@@ -1,7 +1,10 @@
 /* CREATE USER */
-CREATE USER ‘yoonsung’@‘%’ IDENTIFIED BY ‘userId’;
-GRANT ALL PRIVILEGES ON  yoda%.* to yoonsung
 
+CREATE DATABASE dbName;
+USE dbName;
+
+CREATE USER ‘userId’@‘%’ IDENTIFIED BY ‘passwd’;
+GRANT ALL PRIVILEGES ON  dbName%.* to userId;
 
 
 DROP DATABASE IF EXISTS yoda;
