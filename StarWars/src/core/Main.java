@@ -36,7 +36,6 @@ public class Main {
 		try {
 			galaxies = getGalaxies();
 			System.out.println("galaxies : "+galaxies.size());
-			Scanner scanner = new Scanner(System.in);
 			JoinThread.setGalaxies(galaxies);
 			User.setGalaxies(galaxies);
 		} catch (Exception e) {
@@ -80,6 +79,7 @@ public class Main {
 			
 			while (rs.next()) {
 				int galaxyId = rs.getInt("GID");
+				System.out.println(galaxyId);
 				galaxies.put( galaxyId, new Galaxy(connectionPool, galaxyId, rs.getString("NAME")));
 			}
 			

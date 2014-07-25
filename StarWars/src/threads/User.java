@@ -5,7 +5,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Types;
-import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
@@ -17,6 +16,7 @@ public class User extends Thread {
 	@Override
 	public void run() {
 		for (int i = 0; i < ATTACK_NUM && !this.isInterrupted(); i++) {
+			System.out.println("i : "+i);
 			operation();
 		}
 	}
@@ -42,11 +42,11 @@ public class User extends Thread {
 			callableStatement.setInt(1, attackerGalaxy.id);
 			callableStatement.registerOutParameter(2, Types.INTEGER);
 			callableStatement.registerOutParameter(3, Types.INTEGER);
-
+			System.out.println("testPrint");
 			callableStatement.execute();
 
-			int attackerId = (int) callableStatement.getObject(1);
-			int damage = (int) callableStatement.getObject(2);
+			int attackerId = (int) callableStatement.getObject(2);
+			int damage = (int) callableStatement.getObject(3);
 
 			boolean isSuccess = attack(attackerId, damage, targetGalaxy.id,
 					targetConnection);
@@ -70,6 +70,9 @@ public class User extends Thread {
 			try {
 				if (connection != null)
 					connection.close();
+				
+				if (targetConnection != null)
+					targetConnection.close();
 			} catch (SQLException e) {
 				e.printStackTrace();
 			}

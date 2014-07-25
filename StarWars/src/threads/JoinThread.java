@@ -66,6 +66,7 @@ public class JoinThread extends Thread{
 		
 		System.out.println("updateCount : "+callableStatement.getUpdateCount());
 		
+		connection.close();
 		//System.out.println("ADDUER_SHARD RESULT: "+affectedRowCount);
 	}
 	
