@@ -1,17 +1,4 @@
 /*
-DB0
-Global
-
-gallexy 0,2
-ship
-user
-
-============================
-DB1
-gallexy 1,3
-ship
-user
-
 TODO
 1. isolation level repetable read 격리수준 적용
 2. transaction 적용
@@ -55,6 +42,8 @@ CREATE PROCEDURE ADDUSER(OUT RUID INT, OUT RDBID INT, OUT RGID TINYINT)
 	END &&
 DELIMITER ;
 
+
+/* Test Code */
 CALL ADDUSER(@RUID, @RDBID, @RGID);
 
 SELECT @RUID;
