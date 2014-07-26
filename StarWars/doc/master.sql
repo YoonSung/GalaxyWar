@@ -4,12 +4,21 @@ TODO
 2. transaction 적용
 */
 
+/*
+TODO
+1. isolation level repetable read 격리수준 적용
+2. transaction 적용
+*/
+
 DROP DATABASE IF EXISTS yoda;
 CREATE DATABASE IF NOT EXISTS yoda;
 USE yoda;
 
 /* Create table */
-
+CREATE USER 'jedi'@'%' IDENTIFIED BY 'jedi';
+CREATE USER 'jedi'@'localhost' IDENTIFIED BY 'jedi';
+GRANT ALL PRIVILEGES ON  yoda.* to 'jedi';
+GRANT EXECUTE ON yoda.* TO 'jedi';
 
 CREATE TABLE db (
 	DBID TINYINT,
@@ -29,8 +38,8 @@ CREATE TABLE galaxy2db (
 );
 
 /* Insert Initial Data */
-INSERT INTO db VALUES(1, "SHARD1", IP, PORT);
-INSERT INTO db VALUES(2, "SHARD2", IP, PORT);
+INSERT INTO db VALUES(1, "SHARD1", "10.73.45.66");
+INSERT INTO db VALUES(2, "SHARD2", "10.73.45.67");
 INSERT INTO galaxy2db VALUES(1, 2);
 INSERT INTO galaxy2db VALUES(2, 1);
 INSERT INTO galaxy2db VALUES(3, 2);
@@ -44,9 +53,9 @@ CREATE PROCEDURE ADDUSER(OUT RUID INT, OUT RDBID INT, OUT RGID TINYINT)
 		START TRANSACTION;
 		INSERT INTO user2db values();
 		set RUID = last_insert_id();
-		set RGID = RUID % 4;
+		set RGID = RUID % 4 + 1;
 		set RDBID = RGID % 2 + 1;
-		UPDATE user2db SET DBID = RDBID, GID = RGID WHERE USERID = RUID;
+		UPDATE user2db SET DBID = RDBID, GID = RGID WHERE UID = RUID;
 		COMMIT;
 	END &&
 DELIMITER ;
@@ -58,10 +67,3 @@ CREATE PROCEDURE RANDOM_ATTACKER(OUT RGID TINYINT, OUT RUID INT)
 		SELECT GID, UID INTO RGID, RUID FROM user2db ORDER BY rand() LIMIT 1;
 	END $$
 DELIMITER ;
-
-/* Test Code */
-CALL ADDUSER(@RUID, @RDBID, @RGID);
-
-SELECT @RUID;
-SELECT @RDBID;
-SELECT @RGID;
