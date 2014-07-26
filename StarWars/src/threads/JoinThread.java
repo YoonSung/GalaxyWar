@@ -1,28 +1,30 @@
 package threads;
 import java.sql.CallableStatement;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Types;
-import java.util.List;
 import java.util.Map;
+
+import core.ConnectionPool;
 
 
 public class JoinThread extends Thread{
 
-	private static Map<Integer, Galaxy> galaxies;
-	
-	private final String user = "jedi";
-	private final String password = "jedi";
-	private final String url = "jdbc:mysql://10.73.43.201/yoda?noAccessToProcedureBodies=true";
+	private final ConnectionPool globalConnectionPool;
+	private final Map<Integer, ConnectionPool> shardConnectionPools;
 	private final int MAX_REGISTER_NUMBER = 100000;
 	
+	public JoinThread(ConnectionPool globalConnectionPool, Map<Integer, ConnectionPool> shardConnectionPools) {
+		this.globalConnectionPool = globalConnectionPool;
+		this.shardConnectionPools = shardConnectionPools;
+		
+	}
+
 	private void register() throws ClassNotFoundException, SQLException {
 		
 		//regist master
 		Class.forName("com.mysql.jdbc.Driver");
-		Connection connection;
-		connection = DriverManager.getConnection(url, user, password);
+		Connection connection = globalConnectionPool.getConnection();
 		
 		String sql = "{CALL ADDUSER(?, ?, ?)}";
 		CallableStatement callableStatement = connection.prepareCall(sql);
@@ -30,10 +32,9 @@ public class JoinThread extends Thread{
 		callableStatement.registerOutParameter(1, Types.INTEGER);
 		callableStatement.registerOutParameter(2, Types.INTEGER);
 		callableStatement.registerOutParameter(3, Types.TINYINT);
-		
 		callableStatement.execute();
+		
 		int userId = (int) callableStatement.getObject(1);
-		//TODO databaseId에 대한 삭제필요
 		int databaseId = (int) callableStatement.getObject(2);
 		int galaxyId = (int) callableStatement.getObject(3);
 		
@@ -45,29 +46,21 @@ public class JoinThread extends Thread{
 		connection.close();
 		
 		//regist shard
-		registerShard(userId, galaxyId);
+		registerShard(userId, databaseId, galaxyId);
 	}
 
-	private void registerShard(int userId, int galaxyId)
+	private void registerShard(int userId, int databaseId, int galaxyId)
 			throws SQLException {
-		System.out.println("galaxyId : "+galaxyId);
-		System.out.println("getGalaxy : " + galaxies.size());
-		System.out.println("getGalaxy : " + galaxies.get(galaxyId));
-		
-		Connection connection = galaxies.get(galaxyId).getConnection();
+
 		String sql = "{CALL ADDUSER_SHARD(?, ?)}";
-		CallableStatement callableStatement;
-		callableStatement = connection.prepareCall(sql);
+		Connection connection = shardConnectionPools.get(databaseId).getConnection();
+		CallableStatement callableStatement = connection.prepareCall(sql);
 		
 		callableStatement.setInt(1, userId);
 		callableStatement.setInt(2, galaxyId);
-		
 		callableStatement.execute();
 		
-		System.out.println("updateCount : "+callableStatement.getUpdateCount());
-		
 		connection.close();
-		//System.out.println("ADDUER_SHARD RESULT: "+affectedRowCount);
 	}
 	
 	@Override
@@ -79,9 +72,5 @@ public class JoinThread extends Thread{
 				e.printStackTrace();
 			}
 		}
-	}
-
-	public static void setGalaxies(Map<Integer, Galaxy> galaxies) {
-		JoinThread.galaxies = galaxies; 
 	}
 }

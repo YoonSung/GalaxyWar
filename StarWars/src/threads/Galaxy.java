@@ -7,6 +7,7 @@ import core.ConnectionPool;
 
 public class Galaxy {
 	
+	/* NOT USING NOW */
 	ConnectionPool connectionPool;
 	int id;
 	String name;

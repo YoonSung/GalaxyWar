@@ -5,91 +5,82 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.Scanner;
 
-import threads.Galaxy;
+import threads.AttackThread;
 import threads.JoinThread;
-import threads.SocketThread;
-import threads.User;
+import threads.WebThread;
 
 
 public class Main {
 	
 	private static final int ATTACK_THREAD_NUM = 4; 
 	private static ArrayList<Thread> threads = new ArrayList<Thread>();
+	private static final String GLOBAL_DB_IP = "localhost";
 	
-	@SuppressWarnings("serial")
-	private static ArrayList<String> IP_LIST = new ArrayList<String>(){{
-		add("10.73.45.65");
-		add("10.73.45.67");
-	}};
 	
 	public static void main(String[] args) {
 		
-		SocketThread socketThread = new SocketThread();
-		socketThread.start();
+		// Web Thread
+		WebThread webThread = new WebThread();
+		webThread.start();
 		
-		Map<Integer, Galaxy> galaxies = null;
+		ConnectionPool globalConnectionPool = null;
+		Connection globalConnection = null;
+		Map<Integer, ConnectionPool> shardConnectionPools = null;
 		
 		try {
-			galaxies = getGalaxies();
-			System.out.println("galaxies : "+galaxies.size());
-			JoinThread.setGalaxies(galaxies);
-			User.setGalaxies(galaxies);
-		} catch (Exception e) {
-			e.printStackTrace();
+			globalConnectionPool = makeConnectionPool(GLOBAL_DB_IP);
+			globalConnection = globalConnectionPool.getConnection();
+			shardConnectionPools = getShardConnectionPoolList(globalConnection);
+			globalConnection.close();
+		} catch (SQLException sqle) {
+			sqle.printStackTrace();
+		} catch (ClassNotFoundException cnfe) {
+			cnfe.printStackTrace();
 		}
 		
 		//회원가입
-		JoinThread joinThread = new JoinThread();
+		JoinThread joinThread = new JoinThread(globalConnectionPool, shardConnectionPools);
 		joinThread.start();
-		
 		threads.add(joinThread);
 		
 		//공격
 		for (int i = 0; i < ATTACK_THREAD_NUM; i++) {
-			User user = new User();
-			threads.add(user);
-			user.start();
+			AttackThread attackThread = new AttackThread(globalConnectionPool, shardConnectionPools);
+			threads.add(attackThread);
+			attackThread.start();
 		}
 		
 	}
 	
-	private static Map<Integer, Galaxy> getGalaxies() throws SQLException, ClassNotFoundException {
-		
-		Map<Integer, Galaxy> galaxies = new HashMap<Integer, Galaxy>();
-		
-		for (String ip : IP_LIST) {
-			Class.forName("com.mysql.jdbc.Driver");
-			Connection connection;
-			String user = "jedi";
-			String password = "jedi";
-			String url = "jdbc:mysql://" + ip + "/yoda?noAccessToProcedureBodies=true";
-			
-			String sql = "SELECT * from galaxy";
-			
-			//connection = DriverManager.getConnection(url, user, password);
-			ConnectionPool connectionPool = new ConnectionPool(user, password, url);
-			
-			connection = connectionPool.getConnection();
-			PreparedStatement psmt = connection.prepareStatement(sql);
-			ResultSet rs = psmt.executeQuery();
-			
-			while (rs.next()) {
-				int galaxyId = rs.getInt("GID");
-				System.out.println(galaxyId);
-				galaxies.put( galaxyId, new Galaxy(connectionPool, galaxyId, rs.getString("NAME")));
-			}
-			
-			connection.close();
-			psmt.close();
-			
+	private static Map<Integer, ConnectionPool> getShardConnectionPoolList(
+			Connection globalConnection) throws SQLException, ClassNotFoundException {
+		Map<Integer, ConnectionPool> shardConnectionPoolList = new HashMap<Integer, ConnectionPool>();
+		String sql = "SELECT * FROM db";
+		PreparedStatement psmt = globalConnection.prepareStatement(sql);
+		ResultSet rs = psmt.executeQuery();
+		while (rs.next()) {
+			int dbID = rs.getInt("DBID");
+			String IP = rs.getString("IP");
+			System.out.println(dbID);
+			System.out.println(IP);
+			ConnectionPool shardConnectionPool = makeConnectionPool(IP);
+			shardConnectionPoolList.put(dbID, shardConnectionPool);
 		}
-		
-		return galaxies;
+		return shardConnectionPoolList;
 	}
+
+	private static ConnectionPool makeConnectionPool(String ip) throws ClassNotFoundException {
+		Class.forName("com.mysql.jdbc.Driver");
+		String user = "jedi";
+		String password = "jedi";
+		String url = "jdbc:mysql://" + ip + "/yoda?noAccessToProcedureBodies=true";
+		ConnectionPool connectionPool = new ConnectionPool(user, password, url);
+		System.out.println(connectionPool);
+		return connectionPool;
+	}
+
 	public static void gameOver() {
 		for (Thread thread : threads) {
 			if (!thread.isAlive())

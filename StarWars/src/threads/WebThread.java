@@ -8,7 +8,7 @@ import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-public class SocketThread extends Thread {
+public class WebThread extends Thread {
 
 	private final static int SERVER_PORT = 3000;
 
