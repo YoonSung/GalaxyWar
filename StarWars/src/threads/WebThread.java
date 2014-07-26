@@ -7,15 +7,35 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.Map;
+
+import com.google.gson.Gson;
+
+import core.ConnectionPool;
 
 public class WebThread extends Thread {
 
 	private final static int SERVER_PORT = 3000;
+	private final ConnectionPool globalConnectionPool;
+	private final Map<Integer, ConnectionPool> shardConnectionPools;
+	private final Map<Integer, Integer> galaxyIDToDBID;
+	
+	public WebThread(ConnectionPool globalConnectionPool, Map<Integer, ConnectionPool> shardConnectionPools) {
+		this.globalConnectionPool = globalConnectionPool;
+		this.shardConnectionPools = shardConnectionPools;
+		this.galaxyIDToDBID = getGalaxyIDMap();
+	}
 
 	@Override
 	public void run() {
 		ServerSocket s;
-
+		boolean isRefreshRequest = false;
+		
 		System.out.println("Webserver starting up on port 80");
 		System.out.println("(press ctrl-c to exit)");
 		try {
@@ -42,19 +62,31 @@ public class WebThread extends Thread {
 				// blank line signals the end of the client HTTP
 				// headers.
 				String str = ".";
-				while (!str.equals(""))
+				while (!str.equals("")) {
 					str = in.readLine();
+					if (str.contains("/refresh")) {
+						isRefreshRequest = true;
+					}
+				}
 
 				// Send the response
 				// Send the headers
 				out.println("HTTP/1.0 200 OK");
-				out.println("Content-Type: text/html");
-				out.println("Server: Bot");
+				if (isRefreshRequest) {
+					out.println("Content-Type: text/json");
+				} else {
+					out.println("Content-Type: text/html");
+				}
 				// this blank line signals the end of the headers
 				out.println("");
 				// Send the HTML page
 
-				String result = makeHtmlString();
+				String result;
+				if (isRefreshRequest) {
+					result = makeRefreshJson();
+				} else {
+					result = makeHtmlString();
+				}
 
 				out.println(result);
 				out.flush();
@@ -66,26 +98,88 @@ public class WebThread extends Thread {
 
 		// s.close();
 	}
+	
+	private String makeRefreshJson() {
+		Map<Integer, Integer> galaxyHpData = null;
+		try {
+			galaxyHpData = getGalaxyHpData();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		Gson gson = new Gson(); 
+		String json = gson.toJson(galaxyHpData);
+		
+		return json;
+	}
+
+	private Map<Integer, Integer> getGalaxyHpData() throws SQLException {
+		Map<Integer, Integer> galaxyHpData = new HashMap<Integer, Integer>();
+		for (int galaxyId : galaxyIDToDBID.keySet()) {
+			int dbid = galaxyIDToDBID.get(galaxyId);
+			String sql = "select HP from galaxy where GID = ?";
+			Connection connection = shardConnectionPools.get(dbid).getConnection();
+			PreparedStatement pstmt = connection.prepareStatement(sql);
+			pstmt.setInt(1, galaxyId);
+			ResultSet rs = pstmt.executeQuery();
+			if (rs.next()) {
+				int hp = rs.getInt(1);
+				if (hp < 0) 
+					hp = 0;
+				galaxyHpData.put(galaxyId, hp);
+			}
+			rs.close();
+			pstmt.close();
+			connection.close();
+		}
+		return galaxyHpData;
+	}
+	
+	private Map<Integer, Integer> getGalaxyIDMap() {
+		Map<Integer, Integer> galaxyIDToDBID = new HashMap<Integer, Integer>();
+		String sql = "select * from galaxy2db";
+		Connection globalConnection;
+		try {
+			globalConnection = globalConnectionPool.getConnection();
+			PreparedStatement pstmt = globalConnection.prepareStatement(sql);
+			ResultSet rs = pstmt.executeQuery();
+			while(rs.next()) {
+				int gid = rs.getInt("GID");
+				int dbid = rs.getInt("DBID");
+				galaxyIDToDBID.put(gid, dbid);
+			}
+			pstmt.close();
+			globalConnection.close();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return galaxyIDToDBID;
+	}
 
 	private String makeHtmlString() throws FileNotFoundException, IOException {
 		BufferedReader freader = new BufferedReader(new FileReader(
-				"./webapp/result.html"));
+				"./StarWars/webapp/result.html"));
 		String buffer;
 		StringBuilder sb = new StringBuilder();
 		while ((buffer = freader.readLine()) != null) {
 			sb.append(buffer);
 		}
 		freader.close();
-
+		
 		String result = sb.toString();
-		result = result.replace("$HP1", "20000");
-		result = result.replace("$HP2", "30000");
-		result = result.replace("$HP3", "40000");
-		result = result.replace("$HP4", "50000");
-		result = result.replace("$HPP1", "20");
-		result = result.replace("$HPP2", "30");
-		result = result.replace("$HPP3", "40");
-		result = result.replace("$HPP4", "50");
+		
+		Map<Integer, Integer> galaxyHpData = null;
+		try {
+			galaxyHpData = getGalaxyHpData();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+
+		for (int i=1; i<=4; i++) {
+			int hp = galaxyHpData.get(i);
+			result = result.replace("$HP"+i, String.valueOf(galaxyHpData.get(1)));
+			result = result.replace("$HPP"+i, String.valueOf(galaxyHpData.get(1)/1000));
+
+		}
 		return result;
 	}
 }

@@ -38,9 +38,9 @@ public class JoinThread extends Thread{
 		int databaseId = (int) callableStatement.getObject(2);
 		int galaxyId = (int) callableStatement.getObject(3);
 		
-		System.out.println(userId);
-		System.out.println(databaseId);
-		System.out.println(galaxyId);
+//		System.out.println(userId);
+//		System.out.println(databaseId);
+//		System.out.println(galaxyId);
 		
 		callableStatement.close();
 		connection.close();

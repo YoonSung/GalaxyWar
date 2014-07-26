@@ -21,10 +21,6 @@ public class Main {
 	
 	public static void main(String[] args) {
 		
-		// Web Thread
-		WebThread webThread = new WebThread();
-		webThread.start();
-		
 		ConnectionPool globalConnectionPool = null;
 		Connection globalConnection = null;
 		Map<Integer, ConnectionPool> shardConnectionPools = null;
@@ -39,6 +35,10 @@ public class Main {
 		} catch (ClassNotFoundException cnfe) {
 			cnfe.printStackTrace();
 		}
+		
+		// Web Thread
+		WebThread webThread = new WebThread(globalConnectionPool, shardConnectionPools);
+		webThread.start();
 		
 		//회원가입
 		JoinThread joinThread = new JoinThread(globalConnectionPool, shardConnectionPools);

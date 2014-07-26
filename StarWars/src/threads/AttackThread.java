@@ -47,17 +47,21 @@ public class AttackThread extends Thread {
 	@Override
 	public void run() {
 		for (int i = 0; i < ATTACK_NUM && !this.isInterrupted(); i++) {
-			System.out.println("attack i : "+i);
+//			System.out.println("attack i : "+i);
 			operation();
 		}
 	}
 
 	private void operation() {
 		User attacker = getRandomUser();
+		if (attacker == null) {
+			System.out.println("NULL PTR ECPT!");
+			return;
+		}
 		int attackerDBID = galaxyIDToDBID.get(attacker.gid);
 		int targetGalaxyID = attacker.getRandomTargetGID(1, 4);
 		int targetDBID = galaxyIDToDBID.get(targetGalaxyID);
-		System.out.println("targetGalaxy : "+ targetGalaxyID);
+//		System.out.println("targetGalaxy : "+ targetGalaxyID);
 		
 		String sql = "{CALL GET_ATTACK_POWER(?, ?)}";
 		Connection attackConnection = null;
@@ -124,6 +128,7 @@ public class AttackThread extends Thread {
 			callableStatement.execute();
 			user.gid = (int) callableStatement.getObject(1);
 			user.uid = (int) callableStatement.getObject(2);
+			System.out.println(user.gid);
 			callableStatement.close();
 			connection.close();
 		} catch (Exception e) {
