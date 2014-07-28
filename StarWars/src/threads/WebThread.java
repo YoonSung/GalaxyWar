@@ -23,6 +23,7 @@ import db.ConnectionPool;
 
 public class WebThread extends Thread {
 
+	private static final String WEBAPP_RESULT_HTML = "./webapp/result.html";
 	private final static int SERVER_PORT = 3000;
 	private final ConnectionPool globalConnectionPool;
 	private final Map<Integer, ConnectionPool> shardConnectionPools;
@@ -110,27 +111,7 @@ public class WebThread extends Thread {
 	}
 	
 	private void restart() throws SQLException {
-		Main.gameOver();
-		
-		Connection globalConnection = globalConnectionPool.getConnection();
-		PreparedStatement pstmt = globalConnection.prepareStatement("delete from user2db where UID > 0");
-		pstmt.execute();
-		pstmt.close();
-		globalConnection.close();
-		
-		Connection shard1Connection = shardConnectionPools.get(1).getConnection();
-		PreparedStatement pstmt1 = shard1Connection.prepareStatement("UPDATE galaxy SET HP = 100000 where GID < 5");
-		pstmt1.execute();
-		pstmt1.close();
-		shard1Connection.close();
-		
-		Connection shard2Connection = shardConnectionPools.get(2).getConnection();
-		PreparedStatement pstmt2 = shard2Connection.prepareStatement("UPDATE galaxy SET HP = 100000 where GID < 5");
-		pstmt2.execute();
-		pstmt2.close();
-		shard2Connection.close();
-		
-		Main.startGame();
+		Main.restartGame();
 	}
 
 	private String makeRefreshJson() {
@@ -195,7 +176,7 @@ public class WebThread extends Thread {
 
 	private String makeHtmlString() throws FileNotFoundException, IOException {
 		BufferedReader freader = new BufferedReader(new FileReader(
-				"./StarWars/webapp/result.html"));
+				WEBAPP_RESULT_HTML));
 		String buffer;
 		StringBuilder sb = new StringBuilder();
 		while ((buffer = freader.readLine()) != null) {

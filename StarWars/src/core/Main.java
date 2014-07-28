@@ -1,6 +1,4 @@
 package core;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
 import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -8,9 +6,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
+
 import threads.AttackThread;
 import threads.JoinThread;
 import threads.WebThread;
@@ -34,7 +32,7 @@ public class Main {
 			globalConnectionPool = makeConnectionPool(GLOBAL_DB_IP);
 			globalConnection = globalConnectionPool.getConnection();
 			shardConnectionPools = getShardConnectionPoolList(globalConnection);
-			globalConnection.close();
+			
 			Thread.sleep(1000);
 		} catch (SQLException sqle) {
 			sqle.printStackTrace();
@@ -42,22 +40,26 @@ public class Main {
 			cnfe.printStackTrace();
 		} catch (InterruptedException e) {
 			e.printStackTrace();
+		} finally {
+			if (globalConnection !=null)
+				try {
+					globalConnection.close();
+				} catch (SQLException e) {
+				}
 		}
-		//test
-		initializeDatabase(globalConnectionPool, shardConnectionPools);
-		/*
 		
 		// Web Thread
 		WebThread webThread = new WebThread(globalConnectionPool, shardConnectionPools);
 		webThread.start();
 		
+//		threads = new ArrayList<Thread>();
+//		startGame();
 		
-		startGame();
-		*/
 	}
 	
 	public static void startGame() {
-		threads = new ArrayList<Thread>();
+		//test
+		initializeDatabase();
 		
 		// 회원가입
 		JoinThread joinThread = new JoinThread(globalConnectionPool, shardConnectionPools);
@@ -75,6 +77,11 @@ public class Main {
 		}
 	}
 	
+	public static void restartGame() {
+		gameOver();
+		startGame();
+	}
+	
 	public static void gameOver() {
 		for (Thread thread : threads) {
 			if (!thread.isAlive())
@@ -83,8 +90,7 @@ public class Main {
 		}
 	}
 	
-	static void initializeDatabase(ConnectionPool globalConnectionPool,
-			Map<Integer, ConnectionPool> shardConnectionPools) {
+	static void initializeDatabase() {
 		 //init master
 		initTable(globalConnectionPool);
 		
@@ -105,7 +111,8 @@ public class Main {
 		}
 	}
 	
-	//로컬에 mysql이 없어서 안되네요.. 흐극  
+	//로컬에 mysql이 없어서 안되네요.. 흐극
+	/*
 	private static void initializeFromTerminal(ConnectionPool connectionPool) {
 		try {
 	      String line;
@@ -123,7 +130,8 @@ public class Main {
 	      err.printStackTrace();
 	    }
 	}
-
+	 */
+	
 	private static Map<Integer, ConnectionPool> getShardConnectionPoolList(
 			Connection globalConnection) throws SQLException, ClassNotFoundException {
 		Map<Integer, ConnectionPool> shardConnectionPoolList = new HashMap<Integer, ConnectionPool>();
