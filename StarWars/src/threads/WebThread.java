@@ -18,6 +18,7 @@ import java.util.Map;
 
 import com.google.gson.Gson;
 
+import core.Main;
 import db.ConnectionPool;
 
 public class WebThread extends Thread {
@@ -109,7 +110,8 @@ public class WebThread extends Thread {
 	}
 	
 	private void restart() throws SQLException {
-		System.out.println("RESTART");
+		Main.gameOver();
+		
 		Connection globalConnection = globalConnectionPool.getConnection();
 		PreparedStatement pstmt = globalConnection.prepareStatement("delete from user2db where UID > 0");
 		pstmt.execute();
@@ -127,6 +129,8 @@ public class WebThread extends Thread {
 		pstmt2.execute();
 		pstmt2.close();
 		shard2Connection.close();
+		
+		Main.startGame();
 	}
 
 	private String makeRefreshJson() {
