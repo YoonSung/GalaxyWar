@@ -7,10 +7,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-import db.ConnectionPool;
 import threads.AttackThread;
 import threads.JoinThread;
 import threads.WebThread;
+import db.ConnectionPool;
 
 
 public class Main {
@@ -19,40 +19,57 @@ public class Main {
 	private static ArrayList<Thread> threads = new ArrayList<Thread>();
 	private static final String GLOBAL_DB_IP = "localhost";
 	
+	private static ConnectionPool globalConnectionPool = null;
+	private static Connection globalConnection = null;
+	private static Map<Integer, ConnectionPool> shardConnectionPools = null;
 	
 	public static void main(String[] args) {
 		
-		ConnectionPool globalConnectionPool = null;
-		Connection globalConnection = null;
-		Map<Integer, ConnectionPool> shardConnectionPools = null;
 		
 		try {
 			globalConnectionPool = makeConnectionPool(GLOBAL_DB_IP);
 			globalConnection = globalConnectionPool.getConnection();
 			shardConnectionPools = getShardConnectionPoolList(globalConnection);
 			globalConnection.close();
+			Thread.sleep(1000);
 		} catch (SQLException sqle) {
 			sqle.printStackTrace();
 		} catch (ClassNotFoundException cnfe) {
 			cnfe.printStackTrace();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
 		}
-		
 		// Web Thread
 		WebThread webThread = new WebThread(globalConnectionPool, shardConnectionPools);
 		webThread.start();
 		
-		//회원가입
+		startGame();
+	}
+	
+	public static void startGame() {
+		threads = new ArrayList<Thread>();
+		
+		// 회원가입
 		JoinThread joinThread = new JoinThread(globalConnectionPool, shardConnectionPools);
-		joinThread.start();
 		threads.add(joinThread);
 		
-		//공격
+		// 공격
 		for (int i = 0; i < ATTACK_THREAD_NUM; i++) {
 			AttackThread attackThread = new AttackThread(globalConnectionPool, shardConnectionPools);
 			threads.add(attackThread);
-			attackThread.start();
 		}
-		
+
+		for (Thread thread : threads) {
+			thread.start();
+		}
+	}
+	
+	public static void gameOver() {
+		for (Thread thread : threads) {
+			if (!thread.isAlive())
+				continue;
+			thread.interrupt();
+		}
 	}
 	
 	private static Map<Integer, ConnectionPool> getShardConnectionPoolList(
@@ -82,11 +99,4 @@ public class Main {
 		return connectionPool;
 	}
 
-	public static void gameOver() {
-		for (Thread thread : threads) {
-			if (!thread.isAlive())
-				continue;
-			thread.interrupt();
-		}
-	}
 }

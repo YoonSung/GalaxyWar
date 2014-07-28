@@ -9,6 +9,7 @@ import java.sql.Types;
 import java.util.HashMap;
 import java.util.Map;
 
+import core.Main;
 import db.ConnectionPool;
 
 public class AttackThread extends Thread {
@@ -38,6 +39,9 @@ public class AttackThread extends Thread {
 				int dbid = rs.getInt("DBID");
 				galaxyIDToDBID.put(gid, dbid);
 			}
+			rs.close();
+			pstmt.close();
+			globalConnection.close();
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
@@ -46,8 +50,8 @@ public class AttackThread extends Thread {
 
 	@Override
 	public void run() {
+		System.out.println("THREAD START!");
 		for (int i = 0; i < ATTACK_NUM && !this.isInterrupted(); i++) {
-//			System.out.println("attack i : "+i);
 			operation();
 		}
 	}
@@ -66,23 +70,23 @@ public class AttackThread extends Thread {
 		String sql = "{CALL GET_ATTACK_POWER(?, ?)}";
 		Connection attackConnection = null;
 		Connection targetConnection = null;
+
 		try {
 			attackConnection = shardConnectionPools.get(attackerDBID).getConnection();
 			targetConnection = shardConnectionPools.get(targetDBID).getConnection();
-			
 			CallableStatement callableStatement;
 			callableStatement = attackConnection.prepareCall(sql);
 			callableStatement.setInt(1, attacker.uid);
 			callableStatement.registerOutParameter(2, Types.INTEGER);
 			callableStatement.execute();
 
-			int damage = (int) callableStatement.getObject(2);
-
-			boolean isSuccess = attack(attacker.uid, damage, targetGalaxyID,
+			int damage = callableStatement.getInt(2);
+			System.out.println(damage);
+			int remainHp = attack(attacker.uid, damage, targetGalaxyID,
 					targetConnection);
 			callableStatement.close();
 
-			if (isSuccess) {
+			if (remainHp > 0) {
 				sql = "{CALL LOG(?, ?, ?)}";
 				callableStatement = attackConnection.prepareCall(sql);
 				callableStatement.setInt(1, attacker.uid);
@@ -91,6 +95,9 @@ public class AttackThread extends Thread {
 
 				callableStatement.execute();
 				callableStatement.close();
+			} else {
+				System.out.println("GAME OVER!");
+				Main.gameOver();
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -98,7 +105,6 @@ public class AttackThread extends Thread {
 			try {
 				if (attackConnection != null)
 					attackConnection.close();
-				
 				if (targetConnection != null)
 					targetConnection.close();
 			} catch (SQLException e) {
@@ -107,32 +113,51 @@ public class AttackThread extends Thread {
 		}
 	}
 
-	private boolean attack(int attackerId, int damage, int targetGalaxyID,
+	private int attack(int attackerId, int damage, int targetGalaxyID,
 			Connection targetConnection) throws SQLException {
-		String sql = "UPDATE galaxy SET HP = HP-? WHERE GID = ?";
-		PreparedStatement pstmt = targetConnection.prepareStatement(sql);
-		pstmt.setInt(1, damage);
-		pstmt.setInt(2, targetGalaxyID);
+		String sql = "{CALL ATTACK(?, ?, ?)}";
+		CallableStatement callableStatement = targetConnection.prepareCall(sql);
+		callableStatement.setInt(1, targetGalaxyID);
+		callableStatement.setInt(2, damage);
+		callableStatement.registerOutParameter(3, Types.INTEGER);
+		callableStatement.execute();
+		
+		int remainHp = callableStatement.getInt(3);
 
-		return (pstmt.executeUpdate() == 1);
+		callableStatement.close();
+		return remainHp;
 	}
 
 	private User getRandomUser() {
 		User user = new User();
 		String sql = "{CALL RANDOM_ATTACKER(?, ?)}";
+		Connection connection = null;
 		try {
-			Connection connection = globalConnectionPool.getConnection();
+			connection = globalConnectionPool.getConnection();
 			CallableStatement callableStatement = connection.prepareCall(sql);
 			callableStatement.registerOutParameter(1, Types.TINYINT);
 			callableStatement.registerOutParameter(2, Types.INTEGER);
 			callableStatement.execute();
-			user.gid = (int) callableStatement.getObject(1);
-			user.uid = (int) callableStatement.getObject(2);
-			System.out.println(user.gid);
+			
+			user.gid = callableStatement.getInt(1);
+			user.uid = callableStatement.getInt(2);
+			
 			callableStatement.close();
-			connection.close();
+			
+			if (user.gid == 0) {
+				// 아직 유저가 한 명도 등록되지 않은 경우
+				connection.close();
+				return null;
+			}
 		} catch (Exception e) {
 			e.printStackTrace();
+		} finally {
+			try {
+				if (connection != null)
+					connection.close();
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
 		}
 		return user;
 	}
