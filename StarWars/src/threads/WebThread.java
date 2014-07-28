@@ -7,10 +7,12 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Types;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -106,7 +108,7 @@ public class WebThread extends Thread {
 	}
 	
 	private String makeRefreshJson() {
-		Map<Integer, Integer> galaxyHpData = null;
+		Map<Integer, Galaxy> galaxyHpData = null;
 		try {
 			galaxyHpData = getGalaxyHpData();
 		} catch (SQLException e) {
@@ -118,23 +120,27 @@ public class WebThread extends Thread {
 		return json;
 	}
 
-	private Map<Integer, Integer> getGalaxyHpData() throws SQLException {
-		Map<Integer, Integer> galaxyHpData = new HashMap<Integer, Integer>();
+	private Map<Integer, Galaxy> getGalaxyHpData() throws SQLException {
+		Map<Integer, Galaxy> galaxyHpData = new HashMap<Integer, Galaxy>();
 		for (int galaxyId : galaxyIDToDBID.keySet()) {
 			int dbid = galaxyIDToDBID.get(galaxyId);
-			String sql = "select HP from galaxy where GID = ?";
+//			String sql = "select HP from galaxy where GID = ?";
+			String sql = "{CALL GET_DATA_FOR_WEB(?, ?, ?)}";
 			Connection connection = shardConnectionPools.get(dbid).getConnection();
-			PreparedStatement pstmt = connection.prepareStatement(sql);
-			pstmt.setInt(1, galaxyId);
-			ResultSet rs = pstmt.executeQuery();
-			if (rs.next()) {
-				int hp = rs.getInt(1);
-				if (hp < 0) 
-					hp = 0;
-				galaxyHpData.put(galaxyId, hp);
-			}
-			rs.close();
-			pstmt.close();
+			CallableStatement callableStatement = connection.prepareCall(sql);
+			callableStatement.setInt(1, galaxyId); // GID
+			callableStatement.registerOutParameter(2, Types.INTEGER); // GNAME
+			callableStatement.registerOutParameter(3, Types.INTEGER); // HP
+			callableStatement.execute();
+	
+			String gname = callableStatement.getString(2);
+			int hp = callableStatement.getInt(3);
+			if (hp < 0) 
+				hp = 0;
+			Galaxy galaxy = new Galaxy(galaxyId, gname, hp);
+			galaxyHpData.put(galaxyId, galaxy);
+			
+			callableStatement.close();
 			connection.close();
 		}
 		return galaxyHpData;
@@ -173,7 +179,7 @@ public class WebThread extends Thread {
 		
 		String result = sb.toString();
 		
-		Map<Integer, Integer> galaxyHpData = null;
+		Map<Integer, Galaxy> galaxyHpData = null;
 		try {
 			galaxyHpData = getGalaxyHpData();
 		} catch (SQLException e) {
@@ -181,7 +187,10 @@ public class WebThread extends Thread {
 		}
 
 		for (int i=1; i<=4; i++) {
-			int hp = galaxyHpData.get(i);
+			Galaxy galaxy = galaxyHpData.get(i);
+			int hp = galaxy.hp;
+			String name = galaxy.name;
+			result = result.replace("$NAME"+i, name);
 			result = result.replace("$HP"+i, String.valueOf(hp));
 			result = result.replace("$HPP"+i, String.valueOf(hp/1000));
 		}
