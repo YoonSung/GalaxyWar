@@ -16,7 +16,7 @@ import java.util.Map;
 
 import com.google.gson.Gson;
 
-import core.ConnectionPool;
+import db.ConnectionPool;
 
 public class WebThread extends Thread {
 
@@ -33,24 +33,24 @@ public class WebThread extends Thread {
 
 	@Override
 	public void run() {
-		ServerSocket s;
+		ServerSocket socket;
 		boolean isRefreshRequest = false;
 		
 		System.out.println("Webserver starting up on port 80");
 		System.out.println("(press ctrl-c to exit)");
 		try {
 			// create the main server socket
-			s = new ServerSocket(SERVER_PORT);
+			socket = new ServerSocket(SERVER_PORT);
 		} catch (Exception e) {
 			System.out.println("Error: " + e);
 			return;
 		}
 
 		System.out.println("Waiting for connection");
-		while (!this.interrupted()) {
+		while (!WebThread.interrupted()) {
 			try {
 				// wait for a connection
-				Socket remote = s.accept();
+				Socket remote = socket.accept();
 				// remote is now the connected socket
 				System.out.println("Connection, sending data.");
 				BufferedReader in = new BufferedReader(new InputStreamReader(
@@ -66,6 +66,8 @@ public class WebThread extends Thread {
 					str = in.readLine();
 					if (str.contains("/refresh")) {
 						isRefreshRequest = true;
+					} else if (str.contains("/restart")) {
+						
 					}
 				}
 
@@ -96,7 +98,11 @@ public class WebThread extends Thread {
 			}
 		}
 
-		// s.close();
+		try {
+			socket.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 	
 	private String makeRefreshJson() {
@@ -176,9 +182,8 @@ public class WebThread extends Thread {
 
 		for (int i=1; i<=4; i++) {
 			int hp = galaxyHpData.get(i);
-			result = result.replace("$HP"+i, String.valueOf(galaxyHpData.get(1)));
-			result = result.replace("$HPP"+i, String.valueOf(galaxyHpData.get(1)/1000));
-
+			result = result.replace("$HP"+i, String.valueOf(hp));
+			result = result.replace("$HPP"+i, String.valueOf(hp/1000));
 		}
 		return result;
 	}

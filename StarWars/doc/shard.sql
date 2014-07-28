@@ -1,11 +1,13 @@
-DROP DATABASE IF EXISTS yoda;
-CREATE DATABASE IF NOT EXISTS yoda;
-USE yoda;
-
 /* CREATE USER */
 CREATE USER 'jedi'@'%' IDENTIFIED BY 'jedi';
 GRANT ALL PRIVILEGES ON  yoda.* to 'jedi';
 GRANT EXECUTE ON yoda.* TO 'jedi';
+
+/*==========================================*/
+
+DROP DATABASE IF EXISTS yoda;
+CREATE DATABASE IF NOT EXISTS yoda;
+USE yoda;
 
 /* Create table */
 CREATE TABLE galaxy (

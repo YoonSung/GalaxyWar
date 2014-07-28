@@ -1,4 +1,4 @@
-package core;
+package db;
 
 import java.io.PrintWriter;
 import java.sql.Connection;

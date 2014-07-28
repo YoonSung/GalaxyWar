@@ -1,25 +1,41 @@
-/*
-TODO
-1. isolation level repetable read 격리수준 적용
-2. transaction 적용
-*/
+/* Server Info 
+ * 
+ * <master>
+ * 10.73.45.65 / db1004$
+ * 
+ * 
+ * <shard1>
+ * 10.73.45.66 / databaseyoda 
+ * 
+ * <shard2>
+ * 10.73.45.67 / databaseyoda
+ * 
+ * */
 
-/*
-TODO
-1. isolation level repetable read 격리수준 적용
-2. transaction 적용
-*/
-
-DROP DATABASE IF EXISTS yoda;
-CREATE DATABASE IF NOT EXISTS yoda;
-USE yoda;
-
-/* Create table */
+/* Create User */
 CREATE USER 'jedi'@'%' IDENTIFIED BY 'jedi';
 CREATE USER 'jedi'@'localhost' IDENTIFIED BY 'jedi';
 GRANT ALL PRIVILEGES ON  yoda.* to 'jedi';
 GRANT EXECUTE ON yoda.* TO 'jedi';
 
+/*
+TODO
+1. isolation level repetable read 격리수준 적용
+2. transaction 적용
+*/
+
+/*
+TODO
+1. isolation level repetable read 격리수준 적용
+2. transaction 적용
+*/
+
+/* 초기화 */
+DROP DATABASE IF EXISTS yoda;
+CREATE DATABASE IF NOT EXISTS yoda;
+USE yoda;
+
+/* Create table */
 CREATE TABLE db (
 	DBID TINYINT,
 	DBNAME CHAR(10),

@@ -3,7 +3,7 @@ package threads;
 import java.sql.Connection;
 import java.sql.SQLException;
 
-import core.ConnectionPool;
+import db.ConnectionPool;
 
 public class Galaxy {
 	

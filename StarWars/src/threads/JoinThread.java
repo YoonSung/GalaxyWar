@@ -5,7 +5,7 @@ import java.sql.SQLException;
 import java.sql.Types;
 import java.util.Map;
 
-import core.ConnectionPool;
+import db.ConnectionPool;
 
 
 public class JoinThread extends Thread{

@@ -9,7 +9,7 @@ import java.sql.Types;
 import java.util.HashMap;
 import java.util.Map;
 
-import core.ConnectionPool;
+import db.ConnectionPool;
 
 public class AttackThread extends Thread {
 
