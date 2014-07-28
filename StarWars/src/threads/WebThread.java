@@ -70,7 +70,7 @@ public class WebThread extends Thread {
 					if (str.contains("/refresh")) {
 						isRefreshRequest = true;
 					} else if (str.contains("/restart")) {
-						
+						restart();
 					}
 				}
 
@@ -108,6 +108,27 @@ public class WebThread extends Thread {
 		}
 	}
 	
+	private void restart() throws SQLException {
+		System.out.println("RESTART");
+		Connection globalConnection = globalConnectionPool.getConnection();
+		PreparedStatement pstmt = globalConnection.prepareStatement("delete from user2db where UID > 0");
+		pstmt.execute();
+		pstmt.close();
+		globalConnection.close();
+		
+		Connection shard1Connection = shardConnectionPools.get(1).getConnection();
+		PreparedStatement pstmt1 = shard1Connection.prepareStatement("UPDATE galaxy SET HP = 100000 where GID < 5");
+		pstmt1.execute();
+		pstmt1.close();
+		shard1Connection.close();
+		
+		Connection shard2Connection = shardConnectionPools.get(2).getConnection();
+		PreparedStatement pstmt2 = shard2Connection.prepareStatement("UPDATE galaxy SET HP = 100000 where GID < 5");
+		pstmt2.execute();
+		pstmt2.close();
+		shard2Connection.close();
+	}
+
 	private String makeRefreshJson() {
 		Map<Integer, Galaxy> galaxyHpData = null;
 		try {

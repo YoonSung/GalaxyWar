@@ -7,21 +7,25 @@
 .galaxy-state {
 	width: 600px;
 	height: 130px;
-	background-color:#eee;
-	margin: 30px; 
+	background-color: #eee;
+	margin: 30px;
 }
+
 .galaxy-state h2 {
-	margin-left : 20px;
+	margin-left: 20px;
 }
+
 .galaxy-state span {
-	margin-left : 20px;
+	margin-left: 20px;
 }
+
 .full-hp {
 	width: 550px;
 	height: 30px;
-	margin-left : 20px;
+	margin-left: 20px;
 	border: 1px solid;
 }
+
 .remain-hp {
 	height: 20px;
 	background-color: red;
@@ -31,51 +35,76 @@
 <body>
 	<div id="galaxy1" class="galaxy-state">
 		<H2>$GNAME1</H2>
-		<div class="full-hp"><div class="remain-hp" style="width:$HPP1%"></div></div>
+		<div class="full-hp">
+			<div class="remain-hp" style="width: $HPP1%"></div>
+		</div>
 		<span>$HP1/100000</span>
 	</div>
 	<div id="galaxy2" class="galaxy-state">
 		<H2>$GNAME2</H2>
-		<div class="full-hp"><div class="remain-hp" style="width:$HPP2%"></div></div>
+		<div class="full-hp">
+			<div class="remain-hp" style="width: $HPP2%"></div>
+		</div>
 		<span>$HP2/100000</span>
 	</div>
 	<div id="galaxy3" class="galaxy-state">
 		<H2>$GNAME3</H2>
-		<div class="full-hp"><div class="remain-hp" style="width:$HPP3%"></div></div>
+		<div class="full-hp">
+			<div class="remain-hp" style="width: $HPP3%"></div>
+		</div>
 		<span>$HP3/100000</span>
 	</div>
 	<div id="galaxy4" class="galaxy-state">
 		<H2>$GNAME4</H2>
-		<div class="full-hp"><div class="remain-hp" style="width:$HPP4%"></div></div>
+		<div class="full-hp">
+			<div class="remain-hp" style="width: $HPP4%"></div>
+		</div>
 		<span>$HP4/100000</span>
 	</div>
-	<button>RESTART</button>
-	
+	<button onclick="restart();">Restart</button>
+
 	<script>
-	setInterval(function() {
-		var req = new XMLHttpRequest();
-		req.open('GET', '/refresh', true);
-		req.onreadystatechange = function (aEvt) {
-		  if (req.readyState == 4) {
-		     if(req.status == 200)
-		      refresh(req.responseText)
-		  }
-		};
-		req.send(null);
-	}, 1000);
-	
-	function refresh(text) {
-		var data = JSON.parse(text);
-		var galaxies = document.querySelectorAll("body > div");
-		for (var i=1; i<=4; i++) {
-			var hp = data[i]["hp"];
-			var galaxy = galaxies[i-1];
-			var hpbar = galaxy.querySelector(".remain-hp");
-			hpbar.style.width = hp/1000 + "%";
-			var hpstr = galaxy.querySelector("span");
-			hpstr.innerText = hp + "/100000";
+		var refreshLoop = setInterval(function() {
+			var req = new XMLHttpRequest();
+			req.open('GET', '/refresh', true);
+			req.onreadystatechange = function(aEvt) {
+				if (req.readyState == 4) {
+					if (req.status == 200)
+						refresh(req.responseText)
+				}
+			};
+			req.send(null);
+		}, 1000);
+
+		function refresh(text) {
+			var data = JSON.parse(text);
+			var galaxies = document.querySelectorAll("body > div");
+			var totalHp = 0;
+			for (var i = 1; i <= 4; i++) {
+				var hp = data[i]["hp"];
+				totalHp += hp;
+				var galaxy = galaxies[i - 1];
+				var hpbar = galaxy.querySelector(".remain-hp");
+				hpbar.style.width = hp / 1000 + "%";
+				var hpstr = galaxy.querySelector("span");
+				hpstr.innerText = hp + "/100000";
+			}
+			if (totalHp <= 0) {
+				clearInterval(refreshLoop);
+			}
 		}
-	}
+		
+		function restart() {
+			var req = new XMLHttpRequest();
+			req.open('GET', '/restart', true);
+			req.onreadystatechange = function(aEvt) {
+				if (req.readyState == 4) {
+					if (req.status == 200)
+						window.location="/";
+				}
+			};
+			req.send(null);
+		}
 	</script>
 </body>
 </html>
