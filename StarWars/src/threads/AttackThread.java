@@ -81,7 +81,7 @@ public class AttackThread extends Thread {
 			callableStatement.execute();
 
 			int damage = callableStatement.getInt(2);
-			System.out.println(damage);
+			//System.out.println(damage);
 			int remainHp = attack(attacker.uid, damage, targetGalaxyID,
 					targetConnection);
 			callableStatement.close();

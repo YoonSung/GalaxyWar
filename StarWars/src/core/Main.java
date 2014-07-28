@@ -141,8 +141,8 @@ public class Main {
 		while (rs.next()) {
 			int dbID = rs.getInt("DBID");
 			String IP = rs.getString("IP");
-			System.out.println(dbID);
-			System.out.println(IP);
+			//System.out.println(dbID);
+			//System.out.println(IP);
 			ConnectionPool shardConnectionPool = makeConnectionPool(IP);
 			shardConnectionPoolList.put(dbID, shardConnectionPool);
 		}
@@ -155,7 +155,7 @@ public class Main {
 		String password = "jedi";
 		String url = "jdbc:mysql://" + ip + "/yoda?noAccessToProcedureBodies=true";
 		ConnectionPool connectionPool = new ConnectionPool(user, password, url);
-		System.out.println(connectionPool);
+		//System.out.println(connectionPool);
 		return connectionPool;
 	}
 
