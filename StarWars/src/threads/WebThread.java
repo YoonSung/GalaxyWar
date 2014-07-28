@@ -51,6 +51,7 @@ public class WebThread extends Thread {
 		System.out.println("Waiting for connection");
 		while (!WebThread.interrupted()) {
 			try {
+				isRefreshRequest = false;
 				// wait for a connection
 				Socket remote = socket.accept();
 				// remote is now the connected socket
@@ -190,7 +191,7 @@ public class WebThread extends Thread {
 			Galaxy galaxy = galaxyHpData.get(i);
 			int hp = galaxy.hp;
 			String name = galaxy.name;
-			result = result.replace("$NAME"+i, name);
+			result = result.replace("$GNAME"+i, name);
 			result = result.replace("$HP"+i, String.valueOf(hp));
 			result = result.replace("$HPP"+i, String.valueOf(hp/1000));
 		}

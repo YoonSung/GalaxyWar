@@ -65,14 +65,15 @@
 	}, 1000);
 	
 	function refresh(text) {
-		var hp = JSON.parse(text);
+		var data = JSON.parse(text);
 		var galaxies = document.querySelectorAll("body > div");
-		for (var i=0; i<4; i++) {
-			var galaxy = galaxies[i];
+		for (var i=1; i<=4; i++) {
+			var hp = data[i]["hp"];
+			var galaxy = galaxies[i-1];
 			var hpbar = galaxy.querySelector(".remain-hp");
-			hpbar.style.width = hp[i+1]/1000 + "%";
+			hpbar.style.width = hp/1000 + "%";
 			var hpstr = galaxy.querySelector("span");
-			hpstr.innerText = hp[i+1] + "/100000";
+			hpstr.innerText = hp + "/100000";
 		}
 	}
 	</script>
