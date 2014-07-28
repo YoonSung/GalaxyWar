@@ -47,7 +47,6 @@ public class AttackThread extends Thread {
 	@Override
 	public void run() {
 		for (int i = 0; i < ATTACK_NUM && !this.isInterrupted(); i++) {
-//			System.out.println("attack i : "+i);
 			operation();
 		}
 	}
@@ -120,8 +119,9 @@ public class AttackThread extends Thread {
 	private User getRandomUser() {
 		User user = new User();
 		String sql = "{CALL RANDOM_ATTACKER(?, ?)}";
+		Connection connection = null;
 		try {
-			Connection connection = globalConnectionPool.getConnection();
+			connection = globalConnectionPool.getConnection();
 			CallableStatement callableStatement = connection.prepareCall(sql);
 			callableStatement.registerOutParameter(1, Types.TINYINT);
 			callableStatement.registerOutParameter(2, Types.INTEGER);
@@ -130,9 +130,14 @@ public class AttackThread extends Thread {
 			user.uid = (int) callableStatement.getObject(2);
 			System.out.println(user.gid);
 			callableStatement.close();
-			connection.close();
 		} catch (Exception e) {
 			e.printStackTrace();
+		} finally {
+			if (connection != null)
+				try {
+					connection.close();
+				} catch (SQLException e) {
+				}
 		}
 		return user;
 	}

@@ -24,6 +24,11 @@
 	</dependencies>
 	<build>
 		<sourceDirectory>src</sourceDirectory>
+		<resources>
+			<resource>
+				<directory>/Users/yoon/project/Java/workspace/GalaxyWar/StarWars/sql/</directory>
+			</resource>
+		</resources>
 		<plugins>
 			<plugin>
 				<artifactId>maven-compiler-plugin</artifactId>

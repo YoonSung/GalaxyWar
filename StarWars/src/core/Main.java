@@ -1,23 +1,26 @@
 package core;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 
+import sun.security.rsa.RSASignature.SHA1withRSA;
 import db.ConnectionPool;
-import threads.AttackThread;
-import threads.JoinThread;
-import threads.WebThread;
 
 
 public class Main {
 	
 	private static final int ATTACK_THREAD_NUM = 4; 
 	private static ArrayList<Thread> threads = new ArrayList<Thread>();
-	private static final String GLOBAL_DB_IP = "localhost";
+	private static final String GLOBAL_DB_IP = "10.73.45.65";
 	
 	
 	public static void main(String[] args) {
@@ -36,10 +39,14 @@ public class Main {
 		} catch (ClassNotFoundException cnfe) {
 			cnfe.printStackTrace();
 		}
+		//test
+		initializeDatabase(globalConnectionPool, shardConnectionPools);
+		/*
 		
 		// Web Thread
 		WebThread webThread = new WebThread(globalConnectionPool, shardConnectionPools);
 		webThread.start();
+		
 		
 		//회원가입
 		JoinThread joinThread = new JoinThread(globalConnectionPool, shardConnectionPools);
@@ -52,9 +59,50 @@ public class Main {
 			threads.add(attackThread);
 			attackThread.start();
 		}
-		
+		*/
 	}
 	
+	static void initializeDatabase(ConnectionPool globalConnectionPool,
+			Map<Integer, ConnectionPool> shardConnectionPools) {
+		 //init master
+		initTable(globalConnectionPool);
+		
+		//init shard		
+		for (Entry<Integer, ConnectionPool> entry : shardConnectionPools.entrySet()) {
+			initTable(entry.getValue());
+		}
+	}
+
+	static void initTable(ConnectionPool connectionPool) {
+		CallableStatement callableStatement;
+		try {
+			callableStatement = connectionPool.getConnection().prepareCall("{CALL INIT_TABLE()}");
+			callableStatement.execute();
+			callableStatement.close();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	//로컬에 mysql이 없어서 안되네요.. 흐극  
+	private static void initializeFromTerminal(ConnectionPool connectionPool) {
+		try {
+	      String line;
+	      Process p = Runtime.getRuntime().exec
+	        ("mysql -U jedi -d yoda -h 10.73.45.65 -f ./sql/master.sql");
+	      BufferedReader input =
+	        new BufferedReader
+	          (new InputStreamReader(p.getInputStream()));
+	      while ((line = input.readLine()) != null) {
+	        System.out.println(line);
+	      }
+	      input.close();
+	    }
+	    catch (Exception err) {
+	      err.printStackTrace();
+	    }
+	}
+
 	private static Map<Integer, ConnectionPool> getShardConnectionPoolList(
 			Connection globalConnection) throws SQLException, ClassNotFoundException {
 		Map<Integer, ConnectionPool> shardConnectionPoolList = new HashMap<Integer, ConnectionPool>();
