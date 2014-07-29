@@ -20,6 +20,7 @@ import com.google.gson.Gson;
 
 import core.Main;
 import db.ConnectionPool;
+import dto.Galaxy;
 
 public class WebThread extends Thread {
 
@@ -72,7 +73,7 @@ public class WebThread extends Thread {
 					if (str.contains("/refresh")) {
 						isRefreshRequest = true;
 					} else if (str.contains("/restart")) {
-						restart();
+						Main.restartGame();
 					}
 				}
 
@@ -108,10 +109,6 @@ public class WebThread extends Thread {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-	}
-	
-	private void restart() throws SQLException {
-		Main.restartGame();
 	}
 
 	private String makeRefreshJson() {
@@ -195,8 +192,8 @@ public class WebThread extends Thread {
 
 		for (int i=1; i<=4; i++) {
 			Galaxy galaxy = galaxyHpData.get(i);
-			int hp = galaxy.hp;
-			String name = galaxy.name;
+			int hp = galaxy.getHp();
+			String name = galaxy.getName();
 			result = result.replace("$GNAME"+i, name);
 			result = result.replace("$HP"+i, String.valueOf(hp));
 			result = result.replace("$HPP"+i, String.valueOf(hp/1000));

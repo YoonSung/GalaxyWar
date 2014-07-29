@@ -9,8 +9,11 @@ import java.sql.Types;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.sun.org.apache.bcel.internal.generic.Type;
+
 import core.Main;
 import db.ConnectionPool;
+import dto.User;
 
 public class AttackThread extends Thread {
 
@@ -62,7 +65,7 @@ public class AttackThread extends Thread {
 			System.out.println("NULL PTR ECPT!");
 			return;
 		}
-		int attackerDBID = galaxyIDToDBID.get(attacker.gid);
+		int attackerDBID = galaxyIDToDBID.get(attacker.getGid());
 		int targetGalaxyID = attacker.getRandomTargetGID(1, 4);
 		int targetDBID = galaxyIDToDBID.get(targetGalaxyID);
 //		System.out.println("targetGalaxy : "+ targetGalaxyID);
@@ -76,20 +79,20 @@ public class AttackThread extends Thread {
 			targetConnection = shardConnectionPools.get(targetDBID).getConnection();
 			CallableStatement callableStatement;
 			callableStatement = attackConnection.prepareCall(sql);
-			callableStatement.setInt(1, attacker.uid);
+			callableStatement.setInt(1, attacker.getUid());
 			callableStatement.registerOutParameter(2, Types.INTEGER);
 			callableStatement.execute();
 
 			int damage = callableStatement.getInt(2);
 			//System.out.println(damage);
-			int remainHp = attack(attacker.uid, damage, targetGalaxyID,
+			int remainHp = attack(attacker.getUid(), damage, targetGalaxyID,
 					targetConnection);
 			callableStatement.close();
 
 			if (remainHp > 0) {
 				sql = "{CALL LOG(?, ?, ?)}";
 				callableStatement = attackConnection.prepareCall(sql);
-				callableStatement.setInt(1, attacker.uid);
+				callableStatement.setInt(1, attacker.getUid());
 				callableStatement.setInt(2, targetGalaxyID);
 				callableStatement.setInt(3, damage);
 
@@ -115,16 +118,25 @@ public class AttackThread extends Thread {
 
 	private int attack(int attackerId, int damage, int targetGalaxyID,
 			Connection targetConnection) throws SQLException {
-		String sql = "{CALL ATTACK(?, ?, ?)}";
-		CallableStatement callableStatement = targetConnection.prepareCall(sql);
-		callableStatement.setInt(1, targetGalaxyID);
-		callableStatement.setInt(2, damage);
-		callableStatement.registerOutParameter(3, Types.INTEGER);
-		callableStatement.execute();
 		
-		int remainHp = callableStatement.getInt(3);
-
-		callableStatement.close();
+		String sql = "{CALL ATTACK(?, ?, ?, ?)}";
+		CallableStatement callableStatement = null;
+		int remainHp = 0;
+		try {
+			callableStatement = targetConnection.prepareCall(sql);
+			callableStatement.setInt(1, targetGalaxyID);
+			callableStatement.setInt(2, damage);
+			callableStatement.registerOutParameter(3, Types.INTEGER);
+			callableStatement.execute();
+			
+			remainHp = callableStatement.getInt(3);
+		} catch (Exception e) {
+			
+		} finally {
+			if (callableStatement != null)
+				callableStatement.close();
+		}
+		
 		return remainHp;
 	}
 
@@ -139,8 +151,8 @@ public class AttackThread extends Thread {
 			callableStatement.registerOutParameter(2, Types.INTEGER);
 			callableStatement.execute();
 			
-			user.gid = callableStatement.getInt(1);
-			user.uid = callableStatement.getInt(2);
+			user.setGid(callableStatement.getInt(1));
+			user.setUid(callableStatement.getInt(2));
 			
 			callableStatement.close();
 		} catch (Exception e) {

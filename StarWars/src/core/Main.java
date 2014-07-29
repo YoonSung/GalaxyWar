@@ -27,7 +27,6 @@ public class Main {
 	
 	public static void main(String[] args) {
 		
-		
 		try {
 			globalConnectionPool = makeConnectionPool(GLOBAL_DB_IP);
 			globalConnection = globalConnectionPool.getConnection();
@@ -52,25 +51,35 @@ public class Main {
 		WebThread webThread = new WebThread(globalConnectionPool, shardConnectionPools);
 		webThread.start();
 		
-//		threads = new ArrayList<Thread>();
-//		startGame();
 		
+		//prepare thread
+		initThread();
+		startGame();
 	}
 	
-	public static void startGame() {
-		//test
-		initializeDatabase();
+	private static void initThread() {
+		threads = new ArrayList<Thread>();
 		
 		// 회원가입
 		JoinThread joinThread = new JoinThread(globalConnectionPool, shardConnectionPools);
 		threads.add(joinThread);
+		
+		try {
+			Thread.sleep(1000);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
 		
 		// 공격
 		for (int i = 0; i < ATTACK_THREAD_NUM; i++) {
 			AttackThread attackThread = new AttackThread(globalConnectionPool, shardConnectionPools);
 			threads.add(attackThread);
 		}
+	}
+
+	public static void startGame() {
 		
+		initializeDatabase();
 
 		for (Thread thread : threads) {
 			thread.start();
@@ -101,13 +110,18 @@ public class Main {
 	}
 
 	static void initTable(ConnectionPool connectionPool) {
-		CallableStatement callableStatement;
+		CallableStatement callableStatement = null;
 		try {
 			callableStatement = connectionPool.getConnection().prepareCall("{CALL INIT_TABLE()}");
 			callableStatement.execute();
-			callableStatement.close();
 		} catch (SQLException e) {
 			e.printStackTrace();
+		} finally {
+			if (callableStatement != null)
+				try {
+					callableStatement.close();
+				} catch (SQLException e) {
+				}
 		}
 	}
 	
