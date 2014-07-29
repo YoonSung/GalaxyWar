@@ -9,10 +9,9 @@ import java.sql.Types;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.sun.org.apache.bcel.internal.generic.Type;
-
 import core.Main;
 import db.ConnectionPool;
+import dto.Log;
 import dto.User;
 
 public class AttackThread extends Thread {
@@ -53,10 +52,12 @@ public class AttackThread extends Thread {
 
 	@Override
 	public void run() {
-		System.out.println("THREAD START!");
+		System.out.println("ATTACK THREAD START!");
 		for (int i = 0; i < ATTACK_NUM && !this.isInterrupted(); i++) {
 			operation();
 		}
+		
+		System.out.println("ATTACK THREAD STOP!");
 	}
 
 	private void operation() {
@@ -99,6 +100,9 @@ public class AttackThread extends Thread {
 				callableStatement.registerOutParameter(4, Types.VARCHAR);
 				
 				callableStatement.execute();
+				
+				String log = callableStatement.getString(4);
+				Log.getInstance().addList(log);
 				callableStatement.close();
 			} else {
 				System.out.println("GAME OVER!");
