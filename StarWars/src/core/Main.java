@@ -64,12 +64,6 @@ public class Main {
 		JoinThread joinThread = new JoinThread(globalConnectionPool, shardConnectionPools);
 		threads.add(joinThread);
 		
-		try {
-			Thread.sleep(1000);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-		
 		// 공격
 		for (int i = 0; i < ATTACK_THREAD_NUM; i++) {
 			AttackThread attackThread = new AttackThread(globalConnectionPool, shardConnectionPools);
@@ -82,7 +76,16 @@ public class Main {
 		initializeDatabase();
 
 		for (Thread thread : threads) {
-			thread.start();
+			if (thread instanceof JoinThread) {
+				thread.start();
+				try {
+					Thread.sleep(1000);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			} else {
+				thread.start();
+			}
 		}
 	}
 	

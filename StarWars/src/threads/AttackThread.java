@@ -65,6 +65,7 @@ public class AttackThread extends Thread {
 			System.out.println("NULL PTR ECPT!");
 			return;
 		}
+		
 		int attackerDBID = galaxyIDToDBID.get(attacker.getGid());
 		int targetGalaxyID = attacker.getRandomTargetGID(1, 4);
 		int targetDBID = galaxyIDToDBID.get(targetGalaxyID);
@@ -90,12 +91,13 @@ public class AttackThread extends Thread {
 			callableStatement.close();
 
 			if (remainHp > 0) {
-				sql = "{CALL LOG(?, ?, ?)}";
+				sql = "{CALL LOG(?, ?, ?, ?)}";
 				callableStatement = attackConnection.prepareCall(sql);
 				callableStatement.setInt(1, attacker.getUid());
 				callableStatement.setInt(2, targetGalaxyID);
 				callableStatement.setInt(3, damage);
-
+				callableStatement.registerOutParameter(4, Types.VARCHAR);
+				
 				callableStatement.execute();
 				callableStatement.close();
 			} else {
@@ -119,7 +121,7 @@ public class AttackThread extends Thread {
 	private int attack(int attackerId, int damage, int targetGalaxyID,
 			Connection targetConnection) throws SQLException {
 		
-		String sql = "{CALL ATTACK(?, ?, ?, ?)}";
+		String sql = "{CALL ATTACK(?, ?, ?)}";
 		CallableStatement callableStatement = null;
 		int remainHp = 0;
 		try {
