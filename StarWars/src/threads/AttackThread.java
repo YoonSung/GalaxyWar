@@ -9,12 +9,13 @@ import java.sql.Types;
 import java.util.HashMap;
 import java.util.Map;
 
+import core.CustomThread;
 import core.Main;
 import db.ConnectionPool;
 import dto.Log;
 import dto.User;
 
-public class AttackThread extends Thread {
+public class AttackThread extends CustomThread {
 
 	private final int ATTACK_NUM = 25000;
 	private final ConnectionPool globalConnectionPool;
@@ -52,12 +53,15 @@ public class AttackThread extends Thread {
 
 	@Override
 	public void run() {
+		operationStart();
 		System.out.println("ATTACK THREAD START!");
-		for (int i = 0; i < ATTACK_NUM && !this.isInterrupted(); i++) {
+		
+		for (int i = 0; i < ATTACK_NUM && isOperation(); i++) {
 			operation();
 		}
 		
 		System.out.println("ATTACK THREAD STOP!");
+		operationEnd();
 	}
 
 	private void operation() {
@@ -90,7 +94,6 @@ public class AttackThread extends Thread {
 			int remainHp = attack(attacker.getUid(), damage, targetGalaxyID,
 					targetConnection);
 			callableStatement.close();
-
 			if (remainHp > 0) {
 				sql = "{CALL LOG(?, ?, ?, ?)}";
 				callableStatement = attackConnection.prepareCall(sql);

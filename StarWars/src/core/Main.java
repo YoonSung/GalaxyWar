@@ -18,7 +18,7 @@ import db.ConnectionPool;
 public class Main {
 	
 	private static final int ATTACK_THREAD_NUM = 4; 
-	private static ArrayList<Thread> threads = new ArrayList<Thread>();
+	private static ArrayList<CustomThread> threads = new ArrayList<CustomThread>();
 	private static final String GLOBAL_DB_IP = "10.73.45.65";
 	
 	private static ConnectionPool globalConnectionPool = null;
@@ -58,7 +58,7 @@ public class Main {
 	}
 	
 	private static void initThread() {
-		threads = new ArrayList<Thread>();
+		threads = new ArrayList<CustomThread>();
 		
 		// 회원가입
 		JoinThread joinThread = new JoinThread(globalConnectionPool, shardConnectionPools);
@@ -91,14 +91,15 @@ public class Main {
 	
 	public static void restartGame() {
 		gameOver();
+		initThread();
 		startGame();
 	}
 	
 	public static void gameOver() {
-		for (Thread thread : threads) {
+		for (CustomThread thread : threads) {
 			if (!thread.isAlive())
 				continue;
-			thread.interrupt();
+			thread.operationEnd();
 		}
 	}
 	

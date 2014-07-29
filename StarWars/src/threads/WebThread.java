@@ -13,16 +13,20 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import com.google.gson.Gson;
 
+import core.CustomThread;
 import core.Main;
 import db.ConnectionPool;
 import dto.Galaxy;
+import dto.Log;
 
-public class WebThread extends Thread {
+public class WebThread extends CustomThread {
 
 	private static final String WEBAPP_RESULT_HTML = "./webapp/result.html";
 	private final static int SERVER_PORT = 3000;
@@ -112,6 +116,7 @@ public class WebThread extends Thread {
 	}
 
 	private String makeRefreshJson() {
+		List<Object> returnList = new ArrayList<Object>();
 		Map<Integer, Galaxy> galaxyHpData = null;
 		try {
 			galaxyHpData = getGalaxyHpData();
@@ -119,7 +124,11 @@ public class WebThread extends Thread {
 			e.printStackTrace();
 		}
 		Gson gson = new Gson(); 
-		String json = gson.toJson(galaxyHpData);
+		
+		returnList.add(galaxyHpData);
+		returnList.add(Log.getInstance().getLogAll());
+		
+		String json = gson.toJson(returnList);
 		
 		return json;
 	}

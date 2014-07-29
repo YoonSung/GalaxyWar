@@ -5,10 +5,11 @@ import java.sql.SQLException;
 import java.sql.Types;
 import java.util.Map;
 
+import core.CustomThread;
 import db.ConnectionPool;
 
 
-public class JoinThread extends Thread{
+public class JoinThread extends CustomThread{
 
 	private final ConnectionPool globalConnectionPool;
 	private final Map<Integer, ConnectionPool> shardConnectionPools;
@@ -65,12 +66,17 @@ public class JoinThread extends Thread{
 	
 	@Override
 	public void run() {
-		for (int i = 0; i < MAX_REGISTER_NUMBER && !this.isInterrupted(); i++) {
+		
+		operationStart();
+		
+		for (int i = 0; i < MAX_REGISTER_NUMBER && isOperation(); i++) {
 			try {
 				register();
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
 		}
+		
+		operationEnd();
 	}
 }

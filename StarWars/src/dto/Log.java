@@ -1,6 +1,7 @@
 package dto;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class Log {
@@ -21,7 +22,11 @@ public class Log {
 	
 	public List<String> getLogAll() {
 		ArrayList<String> returnList = new ArrayList<String>();
-		logList.removeAll(returnList);
+		
+		for (int i = 0 ; i < logList.size() ; ++i) {
+			returnList.add(logList.get(i));
+			logList.remove(i);
+		}
 		
 		return returnList;
 	}

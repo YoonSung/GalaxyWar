@@ -30,40 +30,67 @@
 	height: 20px;
 	background-color: red;
 }
+
+.right-division {
+	position: fixed;
+	right: 20px;
+	top: 20px;
+	border: 2px solid black;
+	width: 48%;
+	height: 80%;
+	padding: 5px;
+	overflow: scroll;
+}
+
+p > span {
+	color: #f00;
+	font-size: 20px;
+	font-style: italic;
+	font-weight: bold;
+}
+
 </style>
 </head>
 <body>
-	<div id="galaxy1" class="galaxy-state">
-		<H2>$GNAME1</H2>
-		<div class="full-hp">
-			<div class="remain-hp" style="width: $HPP1%"></div>
+	<div class="left-division">
+		<div id="galaxy1" class="galaxy-state">
+			<H2>$GNAME1</H2>
+			<div class="full-hp">
+				<div class="remain-hp" style="width: $HPP1%"></div>
+			</div>
+			<span>$HP1/100000</span>
 		</div>
-		<span>$HP1/100000</span>
-	</div>
-	<div id="galaxy2" class="galaxy-state">
-		<H2>$GNAME2</H2>
-		<div class="full-hp">
-			<div class="remain-hp" style="width: $HPP2%"></div>
+		<div id="galaxy2" class="galaxy-state">
+			<H2>$GNAME2</H2>
+			<div class="full-hp">
+				<div class="remain-hp" style="width: $HPP2%"></div>
+			</div>
+			<span>$HP2/100000</span>
 		</div>
-		<span>$HP2/100000</span>
-	</div>
-	<div id="galaxy3" class="galaxy-state">
-		<H2>$GNAME3</H2>
-		<div class="full-hp">
-			<div class="remain-hp" style="width: $HPP3%"></div>
+		<div id="galaxy3" class="galaxy-state">
+			<H2>$GNAME3</H2>
+			<div class="full-hp">
+				<div class="remain-hp" style="width: $HPP3%"></div>
+			</div>
+			<span>$HP3/100000</span>
+		</div>  
+		<div id="galaxy4" class="galaxy-state">
+			<H2>$GNAME4</H2>
+			<div class="full-hp">
+				<div class="remain-hp" style="width: $HPP4%"></div>
+			</div>
+			<span>$HP4/100000</span>
 		</div>
-		<span>$HP3/100000</span>
+		<button onclick="restart();">Restart</button>
 	</div>
-	<div id="galaxy4" class="galaxy-state">
-		<H2>$GNAME4</H2>
-		<div class="full-hp">
-			<div class="remain-hp" style="width: $HPP4%"></div>
-		</div>
-		<span>$HP4/100000</span>
+	<div class="right-division">
+	
 	</div>
-	<button onclick="restart();">Restart</button>
 
 	<script>
+		var eLogs = document.querySelector(".right-division"); 
+		var logIndex = 1;
+		
 		var refreshLoop = setInterval(function() {
 			var req = new XMLHttpRequest();
 			req.open('GET', '/refresh', true);
@@ -77,9 +104,14 @@
 		}, 1000);
 
 		function refresh(text) {
-			var data = JSON.parse(text);
-			console.log(data);
-			var galaxies = document.querySelectorAll("body > div");
+			var oResult = JSON.parse(text);
+			
+			console.log(oResult);
+			
+			var data = oResult[0];
+			var aLog = oResult[1];
+			
+			var galaxies = document.querySelectorAll(".galaxy-state");
 			var totalHp = 0;
 			for (var i = 1; i <= 4; i++) {
 				var hp = data[i]["hp"];
@@ -90,9 +122,18 @@
 				var hpstr = galaxy.querySelector("span");
 				hpstr.innerText = hp + "/100000";
 			}
+			console.log(aLog);
+			for (var j = 0 ; j < aLog.length ; ++j ) {
+				++logIndex;
+				eLogs.insertAdjacentHTML("beforeend", "<p><span>"+ logIndex +"</span>&nbsp; &nbsp; &nbsp; &nbsp;"+aLog[j]+"</p>");
+				eLogs.scrollTop = eLogs.scrollHeight;
+			}
+			
 			if (totalHp <= 0) {
 				clearInterval(refreshLoop);
 				alert("전쟁이 끝났습니다!");
+				eLogs.innerText = "";
+				logIndex = 1;
 			}
 		}
 		
